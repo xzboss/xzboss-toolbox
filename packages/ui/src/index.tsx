@@ -57,10 +57,7 @@ export function CardContent({ className, children }: { className?: string; child
   return <div className={clsx('px-4 py-3', className)}>{children}</div>;
 }
 
-export function Input({
-  className,
-  ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={clsx(

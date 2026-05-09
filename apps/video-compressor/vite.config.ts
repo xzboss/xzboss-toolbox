@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@xzboss/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      '@xzboss/ui': path.resolve(__dirname, '../../packages/ui/src/index.tsx'),
     },
   },
 });

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@xzboss/ui": ["../../packages/ui/src/index.ts"],
+      "@xzboss/ui": ["../../packages/ui/src/index.tsx"],
       "@xzboss/utils": ["../../packages/utils/src/index.ts"]
     }
   },

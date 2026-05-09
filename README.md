@@ -4,6 +4,25 @@
 
 当前仓库已初始化 `pnpm` workspace、Moonrepo 与各前端应用骨架，可直接安装依赖后开发或构建。
 
+**注意：** Moon 会读取 Git 状态做缓存与任务图，仓库至少需要有一次提交（存在 `HEAD`），否则 `moon run` 可能报错。
+
+## 本地 Quick start
+
+```bash
+pnpm install
+cp apps/portal/.env.example apps/portal/.env.development
+cp apps/timestamp/.env.example apps/timestamp/.env.development
+cp apps/video-compressor/.env.example apps/video-compressor/.env.development
+pnpm dev
+```
+
+在另外终端可分别运行：
+
+```bash
+pnpm dev:timestamp
+pnpm dev:video
+```
+
 ## 目标
 
 - 使用 `pnpm --filter` 精确运行指定项目。
@@ -39,37 +58,37 @@
 ```text
 xzboss-toolbox/
 ├── .moon/
-│   ├── workspace.yml
-│   ├── toolchain.yml
-│   └── tasks.yml
+│   └── workspace.yml
 ├── apps/
 │   ├── portal/
 │   │   ├── README.md
 │   │   ├── package.json
-│   │   ├── project.yml
+│   │   ├── moon.yml
 │   │   └── src/
 │   ├── timestamp/
 │   │   ├── README.md
 │   │   ├── package.json
-│   │   ├── project.yml
+│   │   ├── moon.yml
 │   │   └── src/
 │   └── video-compressor/
 │       ├── README.md
 │       ├── package.json
-│       ├── project.yml
+│       ├── moon.yml
 │       └── src/
 ├── packages/
 │   ├── ui/
 │   │   ├── package.json
-│   │   ├── project.yml
+│   │   ├── moon.yml
 │   │   └── src/
 │   ├── config/
 │   │   ├── package.json
-│   │   ├── project.yml
-│   │   └── src/
+│   │   ├── moon.yml
+│   │   ├── eslint.config.js
+│   │   ├── prettier.config.js
+│   │   └── tailwind.preset.js
 │   └── utils/
 │       ├── package.json
-│       ├── project.yml
+│       ├── moon.yml
 │       └── src/
 ├── package.json
 ├── pnpm-workspace.yaml
