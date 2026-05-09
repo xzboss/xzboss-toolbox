@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { VideoCompressor } from "@/components/video-compressor";
 import { Button } from "@/components/ui/button";
 
 export default function VideoCompressorPage() {
@@ -12,11 +13,7 @@ export default function VideoCompressorPage() {
         </Button>
       </header>
 
-      <section className="grid flex-1 place-items-center rounded-3xl bg-card/70 p-8 shadow-sm">
-        <div className="text-2xl font-semibold text-muted-foreground">
-          即将上线
-        </div>
-      </section>
+      <VideoCompressor />
     </main>
   );
 }

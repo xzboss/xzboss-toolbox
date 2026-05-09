@@ -16,5 +16,7 @@ alwaysApply: true
 - Avoid decorative hover motion on display surfaces. Hover states should be subtle and functional.
 - For copyable text or tags, hover should only use `cursor: pointer`; do not add decorative hover motion or color changes.
 - Use existing maintained UI components or packages first. Implement custom UI only when no suitable component exists or the implementation is very small.
+- Business components under `components/` should live in their own folder with an `index.tsx` entry.
 - Avoid unnecessary action buttons. Inputs should auto-update outputs when the interaction is obvious.
 - For timestamp text conversion, preserve the original text layout and mark converted timestamp positions inline.
+- For browser video processing, prefer speed over maximum compression ratio.
