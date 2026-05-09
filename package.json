@@ -1,0 +1,25 @@
+{
+  "name": "xzboss-toolbox",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --filter @xzboss/portal dev",
+    "build": "moon run :build",
+    "lint": "moon run :lint",
+    "test": "moon run :test",
+    "dev:portal": "pnpm --filter @xzboss/portal dev",
+    "dev:timestamp": "pnpm --filter @xzboss/timestamp dev",
+    "dev:video": "pnpm --filter @xzboss/video-compressor dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "typescript-eslint": "^8.15.0",
+    "@moonrepo/cli": "^1.30.5",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.2",
+    "typescript": "~5.6.3"
+  }
+}
