@@ -10,7 +10,7 @@ import { BufferedPreviewVideo } from "@/components/video-compressor/buffered-pre
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Mode = "compress" | "resize";
+type Mode = "compress" | "resize" | "fps";
 type Action = "download" | "preview";
 
 type Resolution = {
@@ -34,6 +34,7 @@ export function VideoCompressor() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [mode, setMode] = useState<Mode>("compress");
   const [resolution, setResolution] = useState<Resolution>(resolutions[1]);
+  const [targetFps, setTargetFps] = useState(30);
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
   const [busyAction, setBusyAction] = useState<Action | null>(null);
@@ -84,6 +85,11 @@ export function VideoCompressor() {
       return;
     }
 
+    if (mode === "fps" && targetFps < 1) {
+      toast.error("帧率须大于 0");
+      return;
+    }
+
     setBusyAction(action);
     setProgress(0);
     setStatus("准备中");
@@ -108,15 +114,26 @@ export function VideoCompressor() {
                   }
                 : undefined,
             )
-          : {
-              blob: await compressVideo(
-                file,
-                ffmpegRef,
-                setStatus,
-                setProgress,
-              ),
-              streamingPreviewUsed: false,
-            };
+          : mode === "fps"
+            ? {
+                blob: await reduceFpsVideo(
+                  file,
+                  targetFps,
+                  ffmpegRef,
+                  setStatus,
+                  setProgress,
+                ),
+                streamingPreviewUsed: false,
+              }
+            : {
+                blob: await compressVideo(
+                  file,
+                  ffmpegRef,
+                  setStatus,
+                  setProgress,
+                ),
+                streamingPreviewUsed: false,
+              };
       const outputUrl = URL.createObjectURL(outputBlob);
 
       setStatus("完成");
@@ -125,7 +142,7 @@ export function VideoCompressor() {
       if (action === "download") {
         downloadFile(
           outputUrl,
-          getOutputName(file.name, mode, resolution, outputBlob.type),
+          getOutputName(file.name, mode, resolution, outputBlob.type, targetFps),
         );
         window.setTimeout(() => URL.revokeObjectURL(outputUrl), 1000);
         toast.success("已开始下载");
@@ -200,12 +217,15 @@ export function VideoCompressor() {
           </div>
 
           <div className="rounded-4xl bg-card p-2 shadow-sm">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <TabButton active={mode === "compress"} onClick={() => setMode("compress")}>
                 压缩视频
               </TabButton>
               <TabButton active={mode === "resize"} onClick={() => setMode("resize")}>
                 降低分辨率
+              </TabButton>
+              <TabButton active={mode === "fps"} onClick={() => setMode("fps")}>
+                降低帧率
               </TabButton>
             </div>
           </div>
@@ -224,14 +244,41 @@ export function VideoCompressor() {
             </div>
           ) : null}
 
+          {mode === "fps" ? (
+            <div className="rounded-4xl bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <span className="text-sm font-medium">目标帧率</span>
+                <span className="font-mono text-sm text-muted-foreground">{targetFps}</span>
+              </div>
+              <input
+                aria-label="目标帧率"
+                className="h-2 w-full cursor-pointer accent-foreground"
+                max={120}
+                min={0}
+                step={1}
+                type="range"
+                value={targetFps}
+                onChange={(event) => setTargetFps(Number(event.target.value))}
+              />
+              <div className="mt-2 flex justify-between font-mono text-xs text-muted-foreground">
+                <span>0</span>
+                <span>120</span>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-3 sm:grid-cols-2">
-            <Button type="button" disabled={!file || isBusy} onClick={() => run("download")}>
+            <Button
+              type="button"
+              disabled={!file || isBusy || (mode === "fps" && targetFps < 1)}
+              onClick={() => run("download")}
+            >
               {busyAction === "download" ? "处理中" : "执行"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              disabled={!file || isBusy}
+              disabled={!file || isBusy || (mode === "fps" && targetFps < 1)}
               onClick={() => run("preview")}
             >
               {busyAction === "preview" ? "处理中" : "预览"}
@@ -374,6 +421,94 @@ async function compressVideo(
   await ffmpeg.deleteFile(outputName);
 
   return createVideoBlob(data);
+}
+
+async function reduceFpsVideo(
+  file: File,
+  targetFps: number,
+  ffmpegRef: RefObject<FFmpeg | null>,
+  setStatus: (status: string) => void,
+  setProgress: (progress: number) => void,
+) {
+  setStatus("加载引擎");
+  const ffmpeg = await loadFFmpeg(ffmpegRef);
+  const { fetchFile } = await import("@ffmpeg/util");
+  const inputName = `input.${getExtension(file.name)}`;
+  const outputName = "output.mp4";
+
+  setStatus("读取视频");
+  await ffmpeg.writeFile(inputName, await fetchFile(file));
+  setStatus("处理中");
+
+  const onProgress = ({ progress }: { progress: number }) => {
+    setProgress(Math.max(0, Math.min(progress, 1)));
+  };
+
+  ffmpeg.on("progress", onProgress);
+  let exitCode = 1;
+
+  try {
+    exitCode = await ffmpeg.exec(
+      buildReduceFpsArgs(inputName, outputName, targetFps, true),
+    );
+
+    if (exitCode !== 0) {
+      setStatus("处理中");
+      exitCode = await ffmpeg.exec(
+        buildReduceFpsArgs(inputName, outputName, targetFps, false),
+      );
+    }
+  } finally {
+    ffmpeg.off("progress", onProgress);
+  }
+
+  if (exitCode !== 0) {
+    throw new Error("ffmpeg failed");
+  }
+
+  const data = await ffmpeg.readFile(outputName);
+  await ffmpeg.deleteFile(inputName);
+  await ffmpeg.deleteFile(outputName);
+
+  return createVideoBlob(data);
+}
+
+function buildReduceFpsArgs(
+  inputName: string,
+  outputName: string,
+  fps: number,
+  copyAudio: boolean,
+) {
+  const args = [
+    "-i",
+    inputName,
+    "-map",
+    "0:v:0",
+    "-map",
+    "0:a?",
+    "-vf",
+    `fps=${fps}`,
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-threads",
+    "0",
+    "-crf",
+    "28",
+    "-pix_fmt",
+    "yuv420p",
+  ];
+
+  if (copyAudio) {
+    args.push("-c:a", "copy");
+  } else {
+    args.push("-c:a", "aac", "-b:a", "96k");
+  }
+
+  args.push("-movflags", "faststart", outputName);
+
+  return args;
 }
 
 function buildCompressArgs(
@@ -649,9 +784,19 @@ function getOutputName(
   mode: Mode,
   resolution: Resolution,
   mimeType: string,
+  targetFps?: number,
 ) {
   const basename = filename.replace(/\.[^.]+$/, "");
-  const suffix = mode === "compress" ? "compressed" : resolution.label.toLowerCase();
+  let suffix: string;
+
+  if (mode === "compress") {
+    suffix = "compressed";
+  } else if (mode === "fps") {
+    suffix = `${targetFps ?? 0}fps`;
+  } else {
+    suffix = resolution.label.toLowerCase();
+  }
+
   const extension = mimeType.includes("webm") ? "webm" : "mp4";
 
   return `${basename}-${suffix}.${extension}`;
