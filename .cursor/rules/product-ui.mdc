@@ -1,0 +1,20 @@
+---
+description: Product UI rules for xzboss toolbox
+alwaysApply: true
+---
+
+# Product UI Rules
+
+- This is a toC product. UI copy should be minimal and user-facing.
+- Do not use emoji anywhere in product UI, documentation updates, or commit text.
+- Do not use gradients in UI styles, including Tailwind gradient utilities, CSS `linear-gradient`, `radial-gradient`, or similar background effects.
+- Use a black, white, and gray palette by default. Do not introduce blue or other accent colors unless the user explicitly asks for them.
+- Prefer solid neutral surfaces, clear spacing, strong typography, and subtle shadows.
+- Do not add explanatory engineering copy to the interface.
+- Avoid splitting simple content into many cards. Use cards only when they improve hierarchy.
+- Cards must not use borders.
+- Avoid decorative hover motion on display surfaces. Hover states should be subtle and functional.
+- For copyable text or tags, hover should only use `cursor: pointer`; do not add decorative hover motion or color changes.
+- Use existing maintained UI components or packages first. Implement custom UI only when no suitable component exists or the implementation is very small.
+- Avoid unnecessary action buttons. Inputs should auto-update outputs when the interaction is obvious.
+- For timestamp text conversion, preserve the original text layout and mark converted timestamp positions inline.
